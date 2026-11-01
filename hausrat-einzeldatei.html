@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f5f6f9">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Hausrat">
+  <meta name="description" content="Privates Hausratverzeichnis mit Bruttopreisen, Fotos und Export – offline und lokal gespeichert.">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="apple-touch-icon" href="./icon-180.png">
+  <link rel="icon" type="image/png" href="./icon-192.png">
+  <title>Hausrat – Dein Inventar</title>
+<style>
+:root {
+  color-scheme: light dark;
+  --bg:#f5f6f9; --surface:#ffffff; --surface2:#f2f4f7; --ink:#192334; --muted:#6e7785;
+  --soft:#9099a6; --line:#e8ebf0; --accent:#235fda; --accent-fg:#fff; --good:#218d68;
+  --hero:#172c42; --danger:#cf3345; --shadow:0 10px 28px rgba(22,38,62,.055);
+  --r:20px; --ease:cubic-bezier(.2,.8,.2,1);
+}
+* { box-sizing:border-box; }
+html { -webkit-text-size-adjust:100%; scroll-behavior:smooth; }
+body { margin:0; background:var(--bg); color:var(--ink); font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; font-size:16px; line-height:1.42; }
+button,input,select,textarea { font:inherit; }
+button { cursor:pointer; -webkit-tap-highlight-color:transparent; }
+button:disabled { opacity:.55; cursor:not-allowed; }
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible { outline:3px solid #77a4ff; outline-offset:3px; }
+svg { flex:none; }
+.hidden,[hidden] { display:none!important; }
+.app { width:min(100%, 760px); min-height:100dvh; padding:calc(env(safe-area-inset-top) + 24px) 20px calc(126px + env(safe-area-inset-bottom)); margin:auto; }
+.topbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:36px; }
+.brand { display:flex; align-items:center; gap:11px; font-size:19px; font-weight:760; letter-spacing:-.055em; }
+.brand-mark { display:grid; place-items:center; background:var(--hero); color:white; height:39px; width:39px; border-radius:13px; }
+.private-pill { display:flex; align-items:center; gap:7px; font-size:11px; font-weight:660; letter-spacing:.005em; color:var(--muted); background:var(--surface); padding:10px 12px; border:1px solid var(--line); border-radius:100px; white-space:nowrap; }
+.private-pill .dot { width:7px; height:7px; background:#20ac79; border-radius:50%; flex:none; }
+.kicker { margin:0 0 7px; color:var(--muted); font-size:11px; font-weight:770; letter-spacing:.15em; text-transform:uppercase; }
+h1 { font-size:clamp(29px,6.4vw,40px); line-height:1.13; letter-spacing:-.065em; font-weight:760; margin:0 0 23px; }
+h2 { font-size:19px; line-height:1.22; margin:0; font-weight:750; letter-spacing:-.04em; }
+p { margin:0; }
+.hero { position:relative; overflow:hidden; border-radius:28px; background:linear-gradient(130deg,#182d43,#2a4966); color:#fff; padding:25px 25px 24px; margin:0 0 29px; min-height:185px; isolation:isolate; }
+.hero::after { content:""; position:absolute; z-index:-1; top:-130px; right:-97px; width:350px; height:350px; border:1px solid rgba(255,255,255,.13); border-radius:50%; box-shadow:0 0 0 49px rgba(255,255,255,.035), 0 0 0 103px rgba(255,255,255,.027); }
+.hero-label { text-transform:uppercase; font-size:11px; letter-spacing:.13em; font-weight:780; color:#c8d7e9; }
+.hero-total { display:block; font-size:clamp(34px,7.4vw,48px); letter-spacing:-.065em; line-height:1.15; font-weight:750; font-variant-numeric:tabular-nums; margin-top:13px; overflow-wrap:anywhere; }
+.hero-meta { margin-top:17px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; color:#d6e2ee; font-size:13px; font-weight:540; }
+.hero-sep { width:4px; height:4px; border-radius:50%; background:#b4c7d7; }
+.section-heading { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; gap:10px; }
+.section-count { color:var(--muted); font-size:13px; font-weight:560; }
+.search-wrap { display:flex; align-items:center; gap:10px; height:52px; border-radius:16px; background:var(--surface); border:1px solid var(--line); padding:0 15px; margin-bottom:16px; box-shadow:0 3px 14px rgba(30,52,75,.025); }
+.search-wrap:focus-within { border-color:#8ab1fa; box-shadow:0 0 0 3px rgba(70,132,247,.11); }
+.search-wrap svg { color:var(--soft); }
+.search-wrap input { background:transparent; border:none; outline:none; width:100%; height:100%; color:var(--ink); font-size:16px; }
+.search-wrap input:focus-visible { outline:none; }
+.search-wrap input::placeholder { color:var(--soft); }
+.room-chips { display:flex; align-items:center; gap:8px; overflow-x:auto; margin:0 -20px 16px; padding:0 20px 6px; scrollbar-width:none; scroll-snap-type:x proximity; }
+.room-chips::-webkit-scrollbar { display:none; }
+.chip { flex:none; border:1px solid var(--line); background:var(--surface); color:var(--muted); font-size:13px; font-weight:690; padding:10px 15px; min-height:42px; border-radius:50px; white-space:nowrap; scroll-snap-align:start; }
+.chip.active { background:var(--ink); color:var(--surface); border-color:var(--ink); }
+.list-toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+.list-toolbar .small { font-size:12px; color:var(--muted); }
+.sort { appearance:none; border:0; background:transparent; color:var(--muted); font-size:12px; font-weight:600; padding:8px 18px 8px 8px; max-width:160px; }
+.rows { display:grid; gap:10px; }
+.item-row { display:flex; width:100%; text-align:left; align-items:center; gap:13px; min-height:88px; padding:14px; background:var(--surface); border:1px solid var(--line); border-radius:18px; color:var(--ink); box-shadow:var(--shadow); transition:transform .18s var(--ease),background .18s var(--ease); }
+.item-row:active { transform:scale(.988); }
+.thumb { width:55px; height:55px; flex:none; border-radius:13px; display:grid; place-items:center; background:var(--surface2); color:var(--ink); object-fit:cover; }
+.item-info { min-width:0; flex:1; }
+.item-title { font-size:15px; letter-spacing:-.016em; font-weight:700; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.item-sub { font-size:12px; color:var(--muted); display:block; margin-top:5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.item-price { flex:none; max-width:39%; text-align:right; font-size:15px; font-weight:740; letter-spacing:-.025em; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.item-price small { display:block; font-size:11px; font-weight:500; color:var(--muted); margin-top:4px; }
+.empty { padding:42px 23px; text-align:center; background:var(--surface); border:1px dashed #d2dae5; border-radius:22px; }
+.empty-illustration { width:66px; height:66px; border-radius:22px; background:var(--surface2); color:var(--muted); display:grid; place-items:center; margin:0 auto 17px; }
+.empty h3 { margin:0 0 8px; font-size:17px; }
+.empty p { font-size:13px; line-height:1.55; color:var(--muted); max-width:290px; margin:auto auto 19px; }
+.primary,.secondary,.outline-danger { display:inline-flex; align-items:center; justify-content:center; gap:9px; border:0; border-radius:14px; padding:13px 17px; min-height:48px; font-size:14px; font-weight:740; line-height:1.2; }
+.primary { background:var(--accent); color:var(--accent-fg); }
+.secondary { background:var(--surface2); color:var(--ink); }
+.outline-danger { color:var(--danger); background:transparent; border:1px solid var(--line); }
+.primary:active,.secondary:active { filter:brightness(.92); }
+.full { width:100%; }
+.icon-button { width:44px; height:44px; display:grid; place-items:center; border-radius:50%; border:0; color:var(--ink); background:var(--surface2); }
+.bottom-nav { position:fixed; z-index:25; left:50%; bottom:0; transform:translateX(-50%); width:min(100%,760px); padding:11px 20px calc(11px + env(safe-area-inset-bottom)); background:linear-gradient(to top,var(--bg) 80%,rgba(245,246,249,.88)); }
+.nav-inner { display:grid; grid-template-columns:1fr 1fr 1fr; align-items:center; min-height:69px; padding:5px 8px; border-radius:23px; background:color-mix(in srgb,var(--surface) 94%,transparent); box-shadow:0 4px 27px rgba(22,36,60,.12); border:1px solid var(--line); }
+.nav-tab { border:0; background:transparent; min-height:59px; color:var(--muted); display:flex; flex-direction:column; justify-content:center; align-items:center; gap:3px; font-size:11px; font-weight:680; }
+.nav-tab.active { color:var(--accent); }
+.nav-plus { width:54px; height:54px; border-radius:18px; background:var(--accent); color:white; border:0; display:grid; place-items:center; margin:auto; box-shadow:0 5px 14px rgba(35,95,218,.23); }
+.nav-plus:active { transform:scale(.96); }
+.summary-head { margin-bottom:19px; }
+.summary-head .hero { margin-top:14px; margin-bottom:24px; }
+.stat-group { display:grid; grid-template-columns:1fr 1fr; gap:11px; margin-bottom:29px; }
+.stat-card { background:var(--surface); border:1px solid var(--line); border-radius:18px; padding:17px 18px; }
+.stat-value { font-size:24px; font-weight:760; line-height:1.25; letter-spacing:-.05em; }
+.stat-label { color:var(--muted); font-size:12px; margin-top:5px; }
+.panel { background:var(--surface); border:1px solid var(--line); border-radius:22px; padding:20px; margin-bottom:19px; }
+.panel-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:15px; }
+.room-sum { padding:14px 0; border-bottom:1px solid var(--line); }
+.room-sum:last-child { border:0; padding-bottom:2px; }
+.room-sum-header { display:flex; justify-content:space-between; gap:8px; align-items:baseline; margin-bottom:9px; }
+.room-sum-name { font-size:14px; font-weight:680; }
+.room-sum-count { font-size:12px; font-weight:500; color:var(--muted); margin-left:5px; }
+.room-sum-price { font-size:13px; font-weight:740; font-variant-numeric:tabular-nums; }
+.progress { height:6px; background:var(--surface2); border-radius:10px; overflow:hidden; }
+.progress > span { display:block; background:var(--accent); border-radius:10px; height:100%; }
+.panel-note { color:var(--muted); font-size:12px; line-height:1.58; margin-top:13px; }
+.field { margin-bottom:15px; }
+.field label,.field-label { display:block; color:var(--ink); font-weight:690; margin-bottom:7px; font-size:13px; }
+.field input,.field select,.field textarea { display:block; width:100%; min-height:50px; border:1px solid var(--line); background:var(--surface2); border-radius:13px; padding:12px 14px; color:var(--ink); outline:none; font-size:16px; }
+.field textarea { resize:vertical; min-height:80px; }
+.field input:focus,.field select:focus,.field textarea:focus { border-color:#7aa5f5; box-shadow:0 0 0 3px rgba(70,132,247,.11); }
+.field input::placeholder,.field textarea::placeholder { color:var(--soft); }
+.field-hint { color:var(--muted); font-size:11px; margin-top:6px; }
+.button-stack { display:grid; gap:10px; }
+.export-action { width:100%; min-height:57px; display:flex; justify-content:space-between; align-items:center; padding:12px 15px; border:1px solid var(--line); border-radius:14px; background:var(--surface); color:var(--ink); font-size:14px; font-weight:650; text-align:left; }
+.export-left { display:flex; align-items:center; gap:12px; }
+.export-glyph { width:37px; height:37px; display:grid; place-items:center; background:var(--surface2); border-radius:10px; color:var(--accent); }
+.notice { border-radius:15px; background:var(--surface2); padding:14px 15px; font-size:12px; line-height:1.55; color:var(--muted); margin-top:12px; }
+.notice strong { color:var(--ink); }
+.storage-alert { margin:0 0 18px; border:1px solid #d5ad69; background:#fff6e6; color:#6e4c16; padding:13px; border-radius:14px; font-size:13px; }
+.footer-note { text-align:center; color:var(--soft); font-size:11px; margin:19px 10px; line-height:1.5; }
+.overlay { position:fixed; z-index:50; inset:0; display:flex; align-items:flex-end; justify-content:center; background:rgba(9,18,29,.49); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); }
+.sheet { width:min(100%,760px); max-height:min(94dvh,960px); overflow-y:auto; overscroll-behavior:contain; border-radius:27px 27px 0 0; background:var(--surface); color:var(--ink); padding:0 20px calc(26px + env(safe-area-inset-bottom)); box-shadow:0 -12px 60px rgba(12,23,42,.20); }
+.sheet-grip { width:36px; height:5px; background:#c4cad3; border-radius:30px; margin:10px auto 10px; }
+.sheet-header { display:flex; align-items:center; justify-content:space-between; margin:0 0 18px; }
+.sheet h2 { font-size:22px; }
+.form-grid { display:grid; grid-template-columns:1.2fr .8fr; gap:12px; }
+.form-grid > .field { min-width:0; }
+.qty { display:flex; align-items:center; height:50px; background:var(--surface2); border-radius:13px; border:1px solid var(--line); }
+.qty button { width:45px; height:48px; border:0; display:grid; place-items:center; color:var(--ink); background:transparent; }
+.qty input { width:100%; min-width:0; height:48px; background:transparent; border:0; text-align:center; padding:0; font-size:16px; font-weight:670; }
+details.more { border-top:1px solid var(--line); border-bottom:1px solid var(--line); margin:3px 0 21px; padding:2px 0; }
+details.more > summary { padding:15px 2px; cursor:pointer; list-style:none; display:flex; align-items:center; justify-content:space-between; font-size:14px; font-weight:700; }
+details.more > summary::-webkit-details-marker { display:none; }
+details.more > summary svg { transition:transform .15s; }
+details.more[open] > summary svg { transform:rotate(180deg); }
+.more-body { padding:4px 0 11px; }
+.attachment-controls { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.attachment { border:1px dashed #bac4d3; border-radius:13px; min-height:110px; display:flex; flex-direction:column; justify-content:center; align-items:center; gap:5px; text-align:center; padding:12px 7px; position:relative; overflow:hidden; color:var(--muted); font-size:12px; font-weight:650; background:var(--surface2); }
+.attachment .attachment-photo { height:65px; width:100%; object-fit:contain; border-radius:7px; }
+.attachment input[type=file] { position:absolute; inset:0; opacity:0; width:100%; height:100%; cursor:pointer; }
+.attachment .attachment-label { display:flex; gap:5px; align-items:center; }
+.remove-attachments { display:flex; gap:9px; flex-wrap:wrap; margin-top:7px; }
+.remove-attachments button { border:0; background:transparent; color:var(--danger); min-height:35px; padding:5px 0; font-size:12px; }
+.sheet-actions { display:grid; gap:9px; }
+.sheet-actions.double { grid-template-columns:1fr 1fr; }
+.form-error { font-size:12px; margin:0 0 12px; color:var(--danger); font-weight:610; }
+.edit-delete { margin:8px 0 0; width:100%; min-height:45px; border:0; background:transparent; color:var(--danger); font-weight:650; font-size:13px; }
+.toast { position:fixed; z-index:90; bottom:calc(103px + env(safe-area-inset-bottom)); left:50%; transform:translateX(-50%); width:min(calc(100% - 40px),460px); background:#192333; color:#fff; border-radius:15px; padding:12px 14px; box-shadow:0 10px 35px #0004; display:flex; justify-content:space-between; gap:10px; align-items:center; font-size:13px; }
+.toast button { color:#b6d2ff; background:transparent; border:0; padding:8px; font-weight:760; }
+.import-dialog { border:1px solid var(--line); border-radius:22px; background:var(--surface); color:var(--ink); width:min(calc(100% - 35px),430px); padding:23px; box-shadow:0 24px 80px #0004; }
+.import-dialog::backdrop { background:rgba(8,17,29,.5); }
+.import-dialog h2 { margin:0 0 10px; }
+.import-dialog p { color:var(--muted); font-size:13px; line-height:1.58; margin-bottom:17px; }
+.import-dialog .button-stack { gap:8px; }
+@media (min-width:680px) { .app { padding-left:35px; padding-right:35px; } .room-chips { margin-left:-35px; margin-right:-35px; padding-left:35px; padding-right:35px; } .rows { grid-template-columns:repeat(2,minmax(0,1fr)); } .sheet { border-radius:26px; max-height:90dvh; padding:0 25px 28px; } .overlay { align-items:center; padding:20px; } .bottom-nav { width:min(430px,calc(100% - 36px)); bottom:13px; background:transparent; padding:0; } }
+@media (max-width:360px) { .app { padding-left:15px; padding-right:15px; } .room-chips { margin-left:-15px; margin-right:-15px; padding-left:15px; padding-right:15px; } .private-pill { font-size:10px; padding:9px 10px; } .hero { padding:22px 20px; } .item-row { gap:9px; padding:11px; } .thumb { width:49px; height:49px; } .item-price { font-size:13px; } }
+@media (prefers-color-scheme: dark) { :root { --bg:#10151c; --surface:#1a222d; --surface2:#27313f; --ink:#f0f4fa; --muted:#aab5c3; --soft:#8996a8; --line:#324051; --accent:#79aaff; --accent-fg:#07192f; --good:#6ee0b1; --hero:#213b56; --danger:#ff8691; --shadow:none; } .hero { background:linear-gradient(130deg,#1d3853,#325878); } .brand-mark { background:#324c68; } .chip.active { color:#111925; } .bottom-nav { background:linear-gradient(to top,var(--bg) 80%,rgba(16,21,28,.86)); } .notice { background:#25303c; } .storage-alert { background:#45351c; color:#ffd394; border-color:#8f6d3b; } }
+@media (prefers-reduced-motion: reduce) { *,*::before,*::after { scroll-behavior:auto!important; transition:none!important; animation:none!important; } }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="topbar">
+    <div class="brand"><span class="brand-mark" aria-hidden="true"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m3.5 10 8.5-7 8.5 7V21H3.5V10Z"/><path d="M9 21v-7h6v7"/></svg></span><span>hausrat<span style="color:var(--accent)">.</span></span></div>
+    <div class="private-pill" id="storagePill"><span class="dot"></span>Nur auf diesem Gerät</div>
+  </header>
+  <div id="storageAlert" class="storage-alert hidden" role="alert"></div>
+  <main id="content" aria-live="polite"></main>
+  <p class="footer-note" id="footerNote">Ohne Anmeldung · Ohne Cloud · Dein persönliches Verzeichnis</p>
+</div>
+<nav class="bottom-nav" aria-label="Hauptnavigation">
+  <div class="nav-inner">
+    <button class="nav-tab active" id="tabInventory" type="button" aria-label="Inventar anzeigen" aria-current="page"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="16" rx="3"/><path d="M8 9h8M8 14h8"/></svg>Inventar</button>
+    <button class="nav-plus" id="tabAdd" type="button" aria-label="Neuen Gegenstand hinzufügen"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M12 4v16M4 12h16"/></svg></button>
+    <button class="nav-tab" id="tabSummary" type="button" aria-label="Zusammenfassung anzeigen"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 20h18M7 16V9M12 16V4M17 16v-5"/></svg>Übersicht</button>
+  </div>
+</nav>
+<div id="itemOverlay" class="overlay hidden" aria-hidden="true">
+  <section class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" id="itemSheet">
+    <div class="sheet-grip" aria-hidden="true"></div>
+    <header class="sheet-header"><h2 id="sheetTitle">Gegenstand erfassen</h2><button type="button" class="icon-button" id="closeSheet" aria-label="Schließen"><svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 5 19 19M19 5 5 19"/></svg></button></header>
+    <form id="itemForm" novalidate>
+      <div class="field"><label for="itemName">Bezeichnung <span aria-hidden="true">*</span></label><input id="itemName" name="name" type="text" maxlength="160" required placeholder="z. B. Artemide Tolomeo Lampe" autocomplete="off" enterkeyhint="next"></div>
+      <div class="field"><label for="itemPrice">Bruttopreis pro Stück (€) <span aria-hidden="true">*</span></label><input id="itemPrice" name="price" type="text" inputmode="decimal" maxlength="24" required placeholder="z. B. 349,90" autocomplete="off"><p class="field-hint">Endpreis inklusive Mehrwertsteuer, keine Nettopreise.</p></div>
+      <div class="form-grid">
+        <div class="field"><label for="itemRoom">Raum</label><select id="itemRoom" name="room"></select></div>
+        <div class="field"><label for="itemQty">Anzahl</label><div class="qty"><button type="button" id="qtyMinus" aria-label="Anzahl verringern">−</button><input id="itemQty" name="qty" type="number" inputmode="numeric" min="1" max="9999" value="1" aria-label="Anzahl"><button type="button" id="qtyPlus" aria-label="Anzahl erhöhen">+</button></div></div>
+      </div>
+      <details class="more" id="moreDetails"><summary>Weitere Angaben (optional)<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg></summary>
+        <div class="more-body">
+          <div class="field"><label for="itemCategory">Kategorie</label><select id="itemCategory"></select></div>
+          <div class="field"><label for="itemDate">Kaufdatum</label><input id="itemDate" type="date"></div>
+          <div class="field"><label for="itemNotes">Notiz / Modell / Seriennummer</label><textarea id="itemNotes" maxlength="3000" placeholder="z. B. Modell, Seriennummer, Standort, Zustand …"></textarea></div>
+          <div class="field"><span class="field-label">Fotos &amp; Belege</span><div class="attachment-controls">
+            <label class="attachment" id="photoBox"><span class="attachment-preview" id="photoPreview"></span><span class="attachment-label" id="photoLabel">Foto hinzufügen</span><input id="itemPhoto" aria-label="Foto hinzufügen" type="file" accept="image/*"></label>
+            <label class="attachment" id="receiptBox"><span class="attachment-preview" id="receiptPreview"></span><span class="attachment-label" id="receiptLabel">Beleg fotografieren</span><input id="itemReceipt" aria-label="Belegfoto hinzufügen" type="file" accept="image/*"></label>
+          </div><div class="remove-attachments"><button type="button" class="hidden" id="removePhoto">Foto entfernen</button><button type="button" class="hidden" id="removeReceipt">Belegfoto entfernen</button></div><p class="field-hint">Bilder bleiben auf diesem Gerät und werden im JSON-Backup mitgesichert.</p></div>
+        </div>
+      </details>
+      <p id="formError" class="form-error hidden" role="alert"></p>
+      <div id="createActions" class="sheet-actions double"><button class="secondary" type="button" id="saveAndNext">Sichern + weiter</button><button class="primary" type="submit" id="saveItem">Sichern</button></div>
+      <div id="editActions" class="hidden"><button class="primary full" type="submit">Änderungen sichern</button><button type="button" id="deleteItem" class="edit-delete">Gegenstand löschen</button></div>
+    </form>
+  </section>
+</div>
+<div id="toast" class="toast hidden" role="status" aria-live="polite"><span id="toastText"></span><button id="toastUndo" type="button" class="hidden">Rückgängig</button></div>
+<dialog id="importDialog" class="import-dialog" aria-labelledby="importTitle">
+  <h2 id="importTitle">Backup importieren</h2><p id="importDescription"></p>
+  <div class="button-stack"><button id="importMerge" class="primary" type="button">Mit vorhandenen Einträgen zusammenführen</button><button id="importReplace" class="outline-danger" type="button">Vorhandene Einträge ersetzen</button><button id="importCancel" class="secondary" type="button">Abbrechen</button></div>
+</dialog>
+<input id="importFile" type="file" accept="application/json,.json" hidden>
+<script>
+'use strict';
+(() => {
+  const ROOMS = ['Wohnzimmer','Schlafzimmer','Küche','Bad','Flur','Arbeitszimmer','Kinderzimmer','Esszimmer','Keller','Balkon / Terrasse','Sonstiges'];
+  const CATEGORIES = ['Beleuchtung','Möbel','Elektronik','Küche & Haushalt','Kunst & Deko','Textilien','Kleidung','Schmuck & Uhren','Sport & Hobby','Sonstiges'];
+  const DB_NAME = 'hausrat-offline-v1', DB_VERSION = 1, STORAGE_KEY = 'hausrat-inventory-fallback-v1';
+  const icons = {
+    box:'<rect x="3.5" y="7" width="17" height="14" rx="2"/><path d="M3.5 11h17M9 7V4.5h6V7"/>',
+    lamp:'<path d="m8 4 8 0 4 8H4l4-8ZM12 12v7M7.5 20h9"/>',
+    sofa:'<path d="M5 10V7a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3M4 10a2 2 0 0 1 2 2v4h12v-4a2 2 0 0 1 4 0v6H2v-6a2 2 0 0 1 2-2ZM5 18v2M19 18v2"/>',
+    tv:'<rect x="3" y="4" width="18" height="14" rx="2"/><path d="M8 21h8M12 18v3"/>',
+    kitchen:'<path d="M5 3v8M8 3v8M2 3v5a4 4 0 0 0 8 0V3M6 11v10M18 21V3c-4 2-4 8 0 10h2"/>',
+    art:'<rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m5 18 6-7 4 4 2-2 2 5"/>',
+    cloth:'<path d="m8 3 4 3 4-3 5 4-3 5-2-1v10H8V11l-2 1-3-5 5-4Z"/>',
+    watch:'<circle cx="12" cy="12" r="5"/><path d="M9 7V2h6v5M9 17v5h6v-5M12 9v3l2 1"/>',
+    dumbbell:'<path d="m6.5 7.5 10 9M3 8l5-5M16 21l5-5M2 10l8-8M14 22l8-8"/>',
+    search:'<circle cx="10.6" cy="10.6" r="6.5"/><path d="m15.5 15.5 5 5"/>',
+    plus:'<path d="M12 4v16M4 12h16"/>',
+    arrow:'<path d="m9 5 7 7-7 7"/>',
+    camera:'<path d="M4 7h3l2-3h6l2 3h3v13H4V7Z"/><circle cx="12" cy="13" r="3"/>',
+    receipt:'<path d="M5 3h14v18l-3-2-4 2-4-2-3 2V3ZM8 9h8M8 13h5"/>',
+    file:'<path d="M13 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10ZM13 3v7h7M8 15h8M8 18h6"/>',
+    download:'<path d="M12 3v13m-5-5 5 5 5-5M4 17v4h16v-4"/>',
+    upload:'<path d="M12 16V3m-5 5 5-5 5 5M4 17v4h16v-4"/>',
+    shield:'<path d="M12 2 4 5v7c0 5.1 3.4 8.5 8 10 4.6-1.5 8-4.9 8-10V5l-8-3Z"/><path d="m9 12 2 2 4-4"/>',
+    check:'<path d="m4 12 5 5L20 6"/>'
+  };
+  const svg = (name, size=23) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name]||icons.box}</svg>`;
+  const glyphFor = c => ({'Beleuchtung':'lamp','Möbel':'sofa','Elektronik':'tv','Küche & Haushalt':'kitchen','Kunst & Deko':'art','Textilien':'cloth','Kleidung':'cloth','Schmuck & Uhren':'watch','Sport & Hobby':'dumbbell'})[c]||'box';
+  const $ = s => document.querySelector(s);
+  const escapeHTML = x => String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const euros = n => new Intl.NumberFormat('de-DE',{style:'currency',currency:'EUR'}).format(n/100);
+  const isoDate = () => { const d=new Date(); return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,10); };
+  const readableDate = d => d ? new Intl.DateTimeFormat('de-DE').format(new Date(`${d}T12:00:00`)) : '–';
+  const id = () => (typeof crypto !== 'undefined' && typeof crypto.randomUUID==='function') ? crypto.randomUUID() : `hr-${Date.now()}-${Math.random().toString(36).slice(2,11)}`;
+  const itemValue = x => x.unitCents * x.qty;
+  const totalValue = arr => arr.reduce((sum,x)=>sum+itemValue(x),0);
+  const quantity = arr => arr.reduce((sum,x)=>sum+x.qty,0);
+  const initSettings = () => ({name:'',address:'',lastRoom:'Wohnzimmer',lastCategory:'Sonstiges'});
+  const state = {items:[],settings:initSettings(),tab:'inventory',room:'Alle',query:'',sort:'newest',editing:null,draft:null,lastFocus:null,pendingImport:null,canPersist:true};
+  let toastTimeout=null,undoItem=null,store,imageBusy=0;
+
+  function parseEuroCents(value) {
+    let s=String(value??'').trim().replace(/\s|€/g,'');
+    if(!s || !/^[\d.,]+$/.test(s)) return null;
+    const comma=s.lastIndexOf(','),dot=s.lastIndexOf('.');
+    let decimal='';
+    if(comma>=0 && dot>=0) decimal=comma>dot?',':'.';
+    else if(comma>=0) { const len=s.length-comma-1; decimal=(len>=1&&len<=2)?',':''; }
+    else if(dot>=0) { const len=s.length-dot-1; decimal=(len>=1&&len<=2)?'.':''; }
+    let normalized;
+    if(decimal) { const sep=s.lastIndexOf(decimal); const integer=s.slice(0,sep).replace(/[.,]/g,''); const fract=s.slice(sep+1); if(!/^\d+$/.test(integer)||!/^\d{1,2}$/.test(fract))return null; normalized=integer+'.'+fract; }
+    else normalized=s.replace(/[.,]/g,'');
+    if(!/^\d+(\.\d{1,2})?$/.test(normalized)) return null;
+    const [eu,ct=''] = normalized.split('.');
+    const cents=Number(eu)*100+Number(ct.padEnd(2,'0'));
+    return Number.isSafeInteger(cents) && cents>0 && cents<=99999999999 ? cents : null;
+  }
+  function validateItem(raw) {
+    if(!raw||typeof raw!=='object')return null;
+    const name=String(raw.name??'').trim().slice(0,160);
+    const unitCents=Number(raw.unitCents),qty=Number(raw.qty);
+    if(!name||!Number.isSafeInteger(unitCents)||unitCents<=0||unitCents>99999999999||!Number.isInteger(qty)||qty<1||qty>9999) return null;
+    const d=raw.purchaseDate ? String(raw.purchaseDate).slice(0,10) : '';
+    const picture=v => (typeof v==='string' && /^data:image\/(jpeg|png|webp);base64,[a-z\d+/=]+$/i.test(v) && v.length<9000000) ? v : null;
+    const safeId=(typeof raw.id==='string' && /^[\w-]{1,100}$/.test(raw.id))?raw.id:id();
+    return {
+      id:safeId,name,unitCents,qty,
+      room:ROOMS.includes(raw.room)?raw.room:'Sonstiges',category:CATEGORIES.includes(raw.category)?raw.category:'Sonstiges',
+      purchaseDate:/^\d{4}-\d{2}-\d{2}$/.test(d)?d:'',notes:String(raw.notes??'').slice(0,3000),
+      photo:picture(raw.photo),receipt:picture(raw.receipt),
+      createdAt:typeof raw.createdAt==='string'?raw.createdAt:new Date().toISOString(),
+      updatedAt:typeof raw.updatedAt==='string'?raw.updatedAt:new Date().toISOString()
+    };
+  }
+  function sanitizeSettings(value) {
+    return {name:String(value?.name??'').slice(0,150),address:String(value?.address??'').slice(0,300),lastRoom:ROOMS.includes(value?.lastRoom)?value.lastRoom:'Wohnzimmer',lastCategory:CATEGORIES.includes(value?.lastCategory)?value.lastCategory:'Sonstiges'};
+  }
+  function createStorage() {
+    let db=null, backend='memory',memoryItems=[],memorySettings=initSettings();
+    function localGet() { const r=localStorage.getItem(STORAGE_KEY); return r?JSON.parse(r):{items:[],settings:initSettings()}; }
+    function localSet(data) { localStorage.setItem(STORAGE_KEY,JSON.stringify(data)); }
+    const transaction=(stores,mode,work)=>new Promise((resolve,reject)=> {
+      const tx=db.transaction(stores,mode); let result;
+      tx.oncomplete=()=>resolve(result); tx.onerror=()=>reject(tx.error||new Error('Speicherfehler')); tx.onabort=()=>reject(tx.error||new Error('Speichervorgang abgebrochen'));
+      try { result=work(tx); } catch(err) { try {tx.abort();}catch(_){} reject(err); }
+    });
+    return {
+      get backend(){return backend;},
+      async init(){
+        try { db=await new Promise((resolve,reject)=>{
+          if(!('indexedDB' in window)) return reject(new Error('IndexedDB nicht verfügbar'));
+          const req=indexedDB.open(DB_NAME,DB_VERSION);
+          req.onupgradeneeded=()=>{ const d=req.result; if(!d.objectStoreNames.contains('items')) d.createObjectStore('items',{keyPath:'id'}); if(!d.objectStoreNames.contains('settings'))d.createObjectStore('settings',{keyPath:'key'}); };
+          req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error);
+        }); backend='indexeddb'; return; } catch(err) { console.warn('IndexedDB nicht verfügbar:',err); }
+        try { localSet(localGet()); backend='localStorage'; return; } catch(err) { console.warn('LocalStorage nicht verfügbar:',err); backend='memory'; }
+      },
+      async read(){
+        if(backend==='indexeddb') {
+          const items=await new Promise((resolve,reject)=>{const r=db.transaction('items').objectStore('items').getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+          const rec=await new Promise((resolve,reject)=>{const r=db.transaction('settings').objectStore('settings').get('main');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
+          return {items,settings:rec?.value||initSettings()};
+        }
+        if(backend==='localStorage')return localGet();
+        return {items:memoryItems,settings:memorySettings};
+      },
+      async putItem(item){
+        if(backend==='indexeddb')return transaction(['items'],'readwrite',tx=>tx.objectStore('items').put(item));
+        if(backend==='localStorage'){const data=localGet();data.items=data.items.filter(x=>x.id!==item.id);data.items.push(item);return localSet(data);}
+        memoryItems=memoryItems.filter(x=>x.id!==item.id).concat(item);
+      },
+      async delItem(itemId){
+        if(backend==='indexeddb')return transaction(['items'],'readwrite',tx=>tx.objectStore('items').delete(itemId));
+        if(backend==='localStorage'){const data=localGet();data.items=data.items.filter(x=>x.id!==itemId);return localSet(data);}
+        memoryItems=memoryItems.filter(x=>x.id!==itemId);
+      },
+      async putSettings(settings){
+        if(backend==='indexeddb')return transaction(['settings'],'readwrite',tx=>tx.objectStore('settings').put({key:'main',value:settings}));
+        if(backend==='localStorage'){const data=localGet();data.settings=settings;return localSet(data);}
+        memorySettings=settings;
+      },
+      async replace(items,settings){
+        if(backend==='indexeddb')return transaction(['items','settings'],'readwrite',tx=>{
+          const os=tx.objectStore('items');os.clear();items.forEach(x=>os.put(x));tx.objectStore('settings').put({key:'main',value:settings});
+        });
+        if(backend==='localStorage')return localSet({items,settings});
+        memoryItems=items;memorySettings=settings;
+      }
+    };
+  }
+
+  function filteredItems(){
+    const q=state.query.toLocaleLowerCase('de').trim();
+    let a=state.items.filter(item=>(state.room==='Alle'||item.room===state.room)&&(!q||[item.name,item.room,item.category,item.notes].some(v=>String(v).toLocaleLowerCase('de').includes(q))));
+    return a.sort((a,b)=>state.sort==='price'?itemValue(b)-itemValue(a):state.sort==='name'?a.name.localeCompare(b.name,'de'):String(b.createdAt).localeCompare(String(a.createdAt)));
+  }
+  function countRooms(){ return new Set(state.items.map(x=>x.room)).size; }
+  function hero(){ return `<section class="hero" aria-label="Gesamtwert des Hausrats"><div class="hero-label">Erfasster Gesamtwert · Brutto</div><strong class="hero-total">${euros(totalValue(state.items))}</strong><div class="hero-meta"><span>${state.items.length} ${state.items.length===1?'Position':'Positionen'}</span><span class="hero-sep"></span><span>${quantity(state.items)} ${quantity(state.items)===1?'Stück':'Stück gesamt'}</span><span class="hero-sep"></span><span>${countRooms()} ${countRooms()===1?'Raum':'Räume'}</span></div></section>`; }
+  function itemRow(item){
+    const thumb=item.photo?`<img class="thumb" alt="" src="${item.photo}">`:`<span class="thumb">${svg(glyphFor(item.category),26)}</span>`;
+    return `<button class="item-row" type="button" data-id="${escapeHTML(item.id)}" aria-label="${escapeHTML(item.name)}, ${euros(itemValue(item))}, bearbeiten">${thumb}<span class="item-info"><span class="item-title">${escapeHTML(item.name)}</span><span class="item-sub">${escapeHTML(item.room)} · ${escapeHTML(item.category)}${item.qty>1?' · '+item.qty+' Stück':''}${item.receipt?' · Beleg':''}</span></span><span class="item-price">${euros(itemValue(item))}<small>${item.qty>1?`${euros(item.unitCents)} / Stück`:'Brutto'}</small></span></button>`;
+  }
+  function renderInventory(){
+    const found=filteredItems();
+    $('#content').innerHTML=`<p class="kicker">Deine persönliche Übersicht</p><h1>Alles im Blick.</h1>${hero()}
+      <div class="section-heading"><h2>Dein Inventar</h2><span class="section-count">${state.items.length} ${state.items.length===1?'Eintrag':'Einträge'}</span></div>
+      <div class="search-wrap">${svg('search',21)}<input type="search" id="searchInput" aria-label="Gegenstände suchen" placeholder="Gegenstände suchen …" value="${escapeHTML(state.query)}"></div>
+      <div class="room-chips" aria-label="Nach Raum filtern">${['Alle',...ROOMS].filter(r=>r==='Alle'||state.items.some(x=>x.room===r)).map(r=>`<button type="button" class="chip ${r===state.room?'active':''}" data-room="${escapeHTML(r)}" aria-pressed="${r===state.room}">${escapeHTML(r)}</button>`).join('')}</div>
+      <div class="list-toolbar"><span class="small">${found.length} ${found.length===1?'Treffer':'Treffer'}</span><select class="sort" id="sortSelect" aria-label="Sortierung"><option value="newest" ${state.sort==='newest'?'selected':''}>Neueste zuerst</option><option value="price" ${state.sort==='price'?'selected':''}>Höchster Wert</option><option value="name" ${state.sort==='name'?'selected':''}>Name A–Z</option></select></div>
+      ${found.length?`<div class="rows">${found.map(itemRow).join('')}</div>`:`<div class="empty"><div class="empty-illustration">${svg(state.items.length?'search':'box',31)}</div><h3>${state.items.length?'Keine Treffer':'Noch kein Gegenstand'}</h3><p>${state.items.length?'Probiere einen anderen Suchbegriff oder Raum.':'Erfasse zum Beispiel deine Artemide Lampe und den Bruttopreis. Die Summe berechnet sich automatisch.'}</p><button class="primary" type="button" id="emptyAdd">${svg('plus',18)} ${state.items.length?'Gegenstand hinzufügen':'Ersten Gegenstand erfassen'}</button></div>`}`;
+    $('#searchInput').addEventListener('input',e=>{const sel=e.target.selectionStart;state.query=e.target.value;renderInventory();const next=$('#searchInput');next.focus();next.setSelectionRange(sel,sel);});
+    $('#sortSelect').addEventListener('change',e=>{state.sort=e.target.value;renderInventory();});
+    document.querySelectorAll('.chip').forEach(b=>b.addEventListener('click',()=>{state.room=b.dataset.room;renderInventory();}));
+    document.querySelectorAll('.item-row').forEach(b=>b.addEventListener('click',()=>openSheet(b.dataset.id)));
+    $('#emptyAdd')?.addEventListener('click',()=>openSheet());
+  }
+  function roomBreakdown(){
+    const a=ROOMS.map(r=>({room:r,items:state.items.filter(x=>x.room===r)})).filter(x=>x.items.length).map(x=>({...x,value:totalValue(x.items)})).sort((a,b)=>b.value-a.value);
+    const max=Math.max(1,...a.map(x=>x.value));
+    if(!a.length)return `<p class="panel-note" style="margin-top:0">Sobald du Gegenstände erfasst hast, siehst du hier den Wert pro Raum.</p>`;
+    return a.map(x=>`<div class="room-sum"><div class="room-sum-header"><div><span class="room-sum-name">${escapeHTML(x.room)}</span><span class="room-sum-count">${x.items.length} Pos.</span></div><span class="room-sum-price">${euros(x.value)}</span></div><div class="progress" aria-label="Anteil des Raumes am größten Raumwert"><span style="width:${Math.max(3,100*x.value/max).toFixed(1)}%"></span></div></div>`).join('');
+  }
+  function renderSummary(){
+    $('#content').innerHTML=`<div class="summary-head"><p class="kicker">Für deine Unterlagen</p><h1>Die Übersicht.</h1>${hero()}</div>
+      <div class="stat-group"><div class="stat-card"><div class="stat-value">${state.items.length}</div><div class="stat-label">Positionen erfasst</div></div><div class="stat-card"><div class="stat-value">${countRooms()}</div><div class="stat-label">Räume dokumentiert</div></div></div>
+      <section class="panel" aria-label="Werte je Raum"><div class="panel-head"><h2>Wert je Raum</h2></div>${roomBreakdown()}</section>
+      <section class="panel"><div class="panel-head"><h2>Angaben für den Bericht</h2></div>
+        <div class="field"><label for="reportName">Name / Versicherungsnehmer (optional)</label><input id="reportName" type="text" maxlength="150" autocomplete="name" placeholder="Vor- und Nachname" value="${escapeHTML(state.settings.name)}"></div>
+        <div class="field" style="margin-bottom:0"><label for="reportAddress">Anschrift der Wohnung (optional)</label><textarea id="reportAddress" maxlength="300" rows="2" placeholder="Straße, Hausnummer, PLZ, Ort">${escapeHTML(state.settings.address)}</textarea></div>
+      </section>
+      <section class="panel"><div class="panel-head"><h2>Export &amp; Sicherung</h2></div><div class="button-stack">
+        <button type="button" class="export-action" id="reportButton"><span class="export-left"><span class="export-glyph">${svg('file',21)}</span><span>Druckansicht / PDF</span></span>${svg('arrow',18)}</button>
+        <button type="button" class="export-action" id="csvButton"><span class="export-left"><span class="export-glyph">${svg('download',21)}</span><span>CSV-Liste exportieren</span></span>${svg('arrow',18)}</button>
+        <button type="button" class="export-action" id="backupButton"><span class="export-left"><span class="export-glyph">${svg('shield',21)}</span><span>Vollständiges JSON-Backup</span></span>${svg('arrow',18)}</button>
+        <button type="button" class="export-action" id="restoreButton"><span class="export-left"><span class="export-glyph">${svg('upload',21)}</span><span>Backup importieren</span></span>${svg('arrow',18)}</button>
+      </div><div class="notice"><strong>Wichtig:</strong> Die Beträge sind deine eingegebenen Bruttopreise. Sie sind nicht automatisch mit dem aktuellen Wiederbeschaffungswert oder einer empfohlenen Versicherungssumme gleichzusetzen. Sichere deine Daten regelmäßig als JSON-Datei außerhalb des Browsers.</div></section>`;
+    $('#reportName').addEventListener('change',e=>updateSetting('name',e.target.value));
+    $('#reportAddress').addEventListener('change',e=>updateSetting('address',e.target.value));
+    $('#reportButton').addEventListener('click',openReport);
+    $('#csvButton').addEventListener('click',exportCSV);
+    $('#backupButton').addEventListener('click',exportJSON);
+    $('#restoreButton').addEventListener('click',()=>$('#importFile').click());
+  }
+  function render(){
+    $('#tabInventory').classList.toggle('active',state.tab==='inventory');
+    $('#tabSummary').classList.toggle('active',state.tab==='summary');
+    $('#tabInventory').setAttribute('aria-current',state.tab==='inventory'?'page':'false');
+    $('#tabSummary').setAttribute('aria-current',state.tab==='summary'?'page':'false');
+    if(state.tab==='inventory')renderInventory();else renderSummary();
+    $('#storageAlert').classList.toggle('hidden',state.canPersist);
+    if(!state.canPersist)$('#storageAlert').textContent='Achtung: Dieser Browser erlaubt keine dauerhafte Speicherung. Deine Eingaben gehen beim Schließen möglicherweise verloren. Erstelle ein JSON-Backup.';
+    $('#storagePill').innerHTML=state.canPersist?'<span class="dot"></span>Nur auf diesem Gerät':'<span class="dot" style="background:#ed9b43"></span>Speichern eingeschränkt';
+  }
+  function goTo(tab){state.tab=tab;state.query='';state.room='Alle';render();window.scrollTo({top:0,behavior:'instant'});}
+  async function updateSetting(key,value){
+    const next={...state.settings,[key]:value};
+    state.settings=next;
+    try {await store.putSettings(next);}catch(err){notify('Änderung konnte nicht gespeichert werden.');console.error(err);}
+  }
+  function notify(message,undo){
+    clearTimeout(toastTimeout);
+    $('#toastText').textContent=message;
+    $('#toastUndo').classList.toggle('hidden',!undo);
+    $('#toast').classList.remove('hidden');
+    undoItem=undo||null;
+    toastTimeout=setTimeout(()=>{$('#toast').classList.add('hidden');undoItem=null;},6500);
+  }
+  function setError(text){const e=$('#formError');e.textContent=text;e.classList.toggle('hidden',!text);}
+  function setQty(n){$('#itemQty').value=Math.max(1,Math.min(9999,Number(n)||1));}
+  const field = name => $('#item'+name);
+  function imagePreview(which,value){
+    const name=which==='photo'?'Photo':'Receipt';
+    const preview=$(`#${which}Preview`),label=$(`#${which}Label`),remove=$(`#remove${name}`);
+    preview.innerHTML=value?`<img class="attachment-photo" src="${value}" alt="${which==='photo'?'Gegenstandsfoto':'Belegfoto'}">`:svg(which==='photo'?'camera':'receipt',23);
+    label.textContent=value?(which==='photo'?'Foto ändern':'Beleg ändern'):(which==='photo'?'Foto hinzufügen':'Beleg fotografieren');
+    remove.classList.toggle('hidden',!value);
+  }
+  function snapshotForm(){
+    return JSON.stringify([$('#itemName').value,$('#itemPrice').value,$('#itemRoom').value,$('#itemCategory').value,$('#itemDate').value,$('#itemNotes').value,$('#itemQty').value,state.draft?.photo,state.draft?.receipt]);
+  }
+  function requestClose(){
+    if(state.draft && state.formBaseline!==snapshotForm() && !confirm('Nicht gespeicherte Eingaben verwerfen?'))return;
+    closeSheet();
+  }
+  function openSheet(itemId){
+    const existing=itemId?state.items.find(x=>x.id===itemId):null;
+    state.lastFocus=document.activeElement;
+    state.editing=existing?.id||null;
+    state.draft=existing?{...existing}:{photo:null,receipt:null};
+    $('#itemName').value=existing?.name||'';
+    $('#itemPrice').value=existing?formatInputPrice(existing.unitCents):'';
+    $('#itemRoom').value=existing?.room||state.settings.lastRoom;
+    $('#itemCategory').value=existing?.category||state.settings.lastCategory;
+    $('#itemDate').value=existing?.purchaseDate||'';
+    $('#itemNotes').value=existing?.notes||'';
+    setQty(existing?.qty||1);
+    $('#itemPhoto').value='';$('#itemReceipt').value='';
+    imagePreview('photo',state.draft.photo);imagePreview('receipt',state.draft.receipt);
+    $('#moreDetails').open=Boolean(existing && (existing.photo||existing.receipt||existing.notes||existing.purchaseDate||existing.category!=='Sonstiges'));
+    $('#sheetTitle').textContent=existing?'Gegenstand bearbeiten':'Gegenstand erfassen';
+    $('#createActions').classList.toggle('hidden',Boolean(existing));
+    $('#editActions').classList.toggle('hidden',!existing);
+    setError('');state.formBaseline=snapshotForm();
+    $('#itemOverlay').classList.remove('hidden');$('#itemOverlay').setAttribute('aria-hidden','false');document.body.style.overflow='hidden';
+    $('#app').inert=true;document.querySelector('.bottom-nav').inert=true;
+    setTimeout(()=>$('#itemName').focus({preventScroll:true}),70);
+  }
+  function formatInputPrice(cents){return new Intl.NumberFormat('de-DE',{minimumFractionDigits:2,maximumFractionDigits:2}).format(cents/100);}
+  function closeSheet(){
+    $('#itemOverlay').classList.add('hidden');$('#itemOverlay').setAttribute('aria-hidden','true');document.body.style.overflow='';state.draft=null;state.editing=null;state.formBaseline=null;
+    $('#app').inert=false;document.querySelector('.bottom-nav').inert=false;
+    if(state.lastFocus && state.lastFocus.isConnected)state.lastFocus.focus({preventScroll:true});
+  }
+  function readForm(){
+    const name=$('#itemName').value.trim();const unitCents=parseEuroCents($('#itemPrice').value);const qty=Number($('#itemQty').value);
+    if(!name){setError('Bitte gib eine Bezeichnung ein.');$('#itemName').focus();return null;}
+    if(!unitCents){setError('Bitte gib einen gültigen Bruttopreis größer als 0 € ein.');$('#itemPrice').focus();return null;}
+    if(!Number.isInteger(qty)||qty<1||qty>9999){setError('Die Anzahl muss zwischen 1 und 9.999 liegen.');$('#itemQty').focus();return null;}
+    setError('');
+    const original=state.editing?state.items.find(x=>x.id===state.editing):null;
+    const now=new Date().toISOString();
+    return {id:original?.id||id(),name,unitCents,qty,room:$('#itemRoom').value,category:$('#itemCategory').value,purchaseDate:$('#itemDate').value,notes:$('#itemNotes').value.trim(),photo:state.draft.photo,receipt:state.draft.receipt,createdAt:original?.createdAt||now,updatedAt:now};
+  }
+  async function saveItem(continueAdding){
+    if(imageBusy){setError('Ein Foto wird noch verarbeitet. Bitte versuche es anschließend erneut.');return;}
+    const item=readForm();if(!item)return;
+    $('#saveItem').disabled=true;$('#saveAndNext').disabled=true;
+    const wasEditing=Boolean(state.editing);
+    try {
+      await store.putItem(item);
+      state.items=state.items.filter(x=>x.id!==item.id).concat(item);
+      if(state.settings.lastRoom!==item.room||state.settings.lastCategory!==item.category){
+        state.settings={...state.settings,lastRoom:item.room,lastCategory:item.category};
+        try{await store.putSettings(state.settings);}catch(e){console.warn('Voreinstellungen nicht gespeichert',e);}
+      }
+      if(continueAdding){
+        const room=item.room,category=item.category;
+        $('#itemName').value='';$('#itemPrice').value='';setQty(1);$('#itemNotes').value='';$('#itemDate').value='';state.draft={photo:null,receipt:null};
+        $('#itemPhoto').value='';$('#itemReceipt').value='';imagePreview('photo',null);imagePreview('receipt',null);
+        $('#itemRoom').value=room;$('#itemCategory').value=category;
+        $('#moreDetails').open=false;state.formBaseline=snapshotForm();render();notify(`${item.name} gesichert`);$('#itemName').focus({preventScroll:true});
+      }else {closeSheet();render();notify(wasEditing?'Änderung gesichert':'Gegenstand gesichert');}
+    }catch(err){console.error(err);setError('Speichern fehlgeschlagen. Möglicherweise ist der Gerätespeicher voll. Bitte erstelle ein Backup und prüfe den freien Speicher.');}
+    finally{$('#saveItem').disabled=false;$('#saveAndNext').disabled=false;}
+  }
+  async function deleteCurrentItem(){
+    const existing=state.items.find(x=>x.id===state.editing);if(!existing)return;
+    if(!confirm(`„${existing.name}“ wirklich löschen?`))return;
+    try {await store.delItem(existing.id);state.items=state.items.filter(x=>x.id!==existing.id);closeSheet();render();notify('Gegenstand gelöscht',existing);}catch(err){setError('Löschen fehlgeschlagen.');}
+  }
+  async function compressPhoto(file){
+    if(!file || !file.type.startsWith('image/'))throw new Error('Bitte wähle ein Bild.');
+    if(file.size>25*1024*1024)throw new Error('Das Foto darf höchstens 25 MB groß sein.');
+    const url=URL.createObjectURL(file);
+    try {
+      const img=await new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=()=>reject(new Error('Bild konnte nicht gelesen werden.'));im.src=url;});
+      const max=1600,scale=Math.min(1,max/Math.max(img.width,img.height));
+      const cv=document.createElement('canvas');cv.width=Math.max(1,Math.round(img.width*scale));cv.height=Math.max(1,Math.round(img.height*scale));
+      const ctx=cv.getContext('2d');if(!ctx)throw new Error('Bildverarbeitung nicht verfügbar.');
+      ctx.fillStyle='#fff';ctx.fillRect(0,0,cv.width,cv.height);ctx.drawImage(img,0,0,cv.width,cv.height);
+      const data=cv.toDataURL('image/jpeg',.83);
+      if(data.length>8500000)throw new Error('Das Bild ist nach der Verarbeitung zu groß.');
+      return data;
+    } finally {URL.revokeObjectURL(url);}
+  }
+  async function attachFile(input,which){
+    const file=input.files?.[0];if(!file)return;
+    const label=$(`#${which}Label`);const original=label.textContent;
+    label.textContent='Wird verarbeitet …';
+    imageBusy++;$('#saveItem').disabled=true;$('#saveAndNext').disabled=true;
+    try{const value=await compressPhoto(file);if(!state.draft)return;state.draft[which]=value;imagePreview(which,value);}
+    catch(err){label.textContent=original;setError(err.message||'Bild konnte nicht gelesen werden.');}
+    finally{imageBusy--;if(!imageBusy){$('#saveItem').disabled=false;$('#saveAndNext').disabled=false;}}
+  }
+  function fileDownload(blob,name){
+    const href=URL.createObjectURL(blob),a=document.createElement('a');a.href=href;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(href),60000);
+  }
+  function exportJSON(){
+    const content={app:'hausrat-offline',version:1,exportedAt:new Date().toISOString(),settings:state.settings,items:state.items};
+    fileDownload(new Blob([JSON.stringify(content,null,2)],{type:'application/json;charset=utf-8'}),`Hausrat-Backup-${isoDate()}.json`);
+    notify('Backup erstellt – Datei bitte sicher aufbewahren.');
+  }
+  function exportCSV(){
+    const quote=s=>'"'+String(s??'').replace(/"/g,'""')+'"';
+    const rows=[['Bezeichnung','Raum','Kategorie','Anzahl','Bruttopreis pro Stück (EUR)','Gesamt brutto (EUR)','Kaufdatum','Notiz','Foto vorhanden','Beleg vorhanden']];
+    state.items.slice().sort((a,b)=>a.room.localeCompare(b.room,'de')||a.name.localeCompare(b.name,'de')).forEach(x=>rows.push([x.name,x.room,x.category,x.qty,formatInputPrice(x.unitCents),formatInputPrice(itemValue(x)),x.purchaseDate,x.notes,x.photo?'Ja':'Nein',x.receipt?'Ja':'Nein']));
+    rows.push(['GESAMT','','','', '',formatInputPrice(totalValue(state.items)),'','','','']);
+    const csv='\ufeff'+rows.map(row=>row.map(quote).join(';')).join('\r\n');
+    fileDownload(new Blob([csv],{type:'text/csv;charset=utf-8'}),`Hausrat-Liste-${isoDate()}.csv`);
+    notify('CSV-Liste erstellt.');
+  }
+  function reportHTML(){
+    const sorted=state.items.slice().sort((a,b)=>ROOMS.indexOf(a.room)-ROOMS.indexOf(b.room)||a.name.localeCompare(b.name,'de'));
+    const rows=sorted.map((x,i)=>`<tr><td class="num">${i+1}</td><td><strong>${escapeHTML(x.name)}</strong>${x.notes?`<small>${escapeHTML(x.notes)}</small>`:''}${x.purchaseDate?`<small>Gekauft: ${readableDate(x.purchaseDate)}</small>`:''}</td><td>${escapeHTML(x.room)}</td><td>${escapeHTML(x.category)}</td><td class="num">${x.qty}</td><td class="num">${euros(x.unitCents)}</td><td class="num"><strong>${euros(itemValue(x))}</strong></td></tr>`).join('');
+    const breakdown=ROOMS.map(r=>({r,items:sorted.filter(x=>x.room===r)})).filter(x=>x.items.length).map(x=>`<tr><td>${escapeHTML(x.r)}</td><td class="num">${x.items.length}</td><td class="num"><strong>${euros(totalValue(x.items))}</strong></td></tr>`).join('');
+    const appendix=sorted.filter(x=>x.photo||x.receipt).map(x=>`<div class="photo-entry"><h3>${escapeHTML(x.name)} · ${escapeHTML(x.room)}</h3><div class="photo-grid">${x.photo?`<figure><img src="${x.photo}" alt="Foto"><figcaption>Gegenstand</figcaption></figure>`:''}${x.receipt?`<figure><img src="${x.receipt}" alt="Beleg"><figcaption>Beleg</figcaption></figure>`:''}</div></div>`).join('');
+    return `<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hausratverzeichnis ${isoDate()}</title><style>
+    :root{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;color:#1c2c40}*{box-sizing:border-box}body{max-width:1050px;margin:35px auto;padding:0 25px;font-size:11px;line-height:1.46}.toolbar{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:14px 16px;background:#f0f4fa;border-radius:12px;margin-bottom:35px}.toolbar button{border:0;background:#235fda;color:white;padding:12px 20px;border-radius:9px;font-size:14px;font-weight:bold;cursor:pointer}h1{font-size:27px;margin:0 0 3px;letter-spacing:-.05em}h2{font-size:16px;margin:32px 0 10px;break-after:avoid}.muted{color:#66758a}.top{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;border-bottom:2px solid #1d3045;padding-bottom:18px}.top .date{text-align:right}.info{white-space:pre-line;margin-top:15px;font-size:12px}.total{margin:25px 0;display:inline-block;background:#eef3fa;border-radius:13px;padding:16px 20px}.total .label{display:block;font-size:11px;color:#51627a}.total strong{display:block;font-size:26px;letter-spacing:-.03em}table{width:100%;border-collapse:collapse}th{background:#eff3f8;color:#364960;font-size:10px;text-align:left}td,th{border-bottom:1px solid #dfe6ed;padding:9px 7px;vertical-align:top}td small{display:block;color:#6d7888;margin-top:3px}td.num,th.num{text-align:right;white-space:nowrap}tfoot td{font-weight:800;background:#eef3f8}.foot{font-size:10px;color:#6d7988;margin:25px 0}.photo-entry{break-inside:avoid;page-break-inside:avoid;margin:18px 0 24px;border-top:1px solid #e4eaf0;padding-top:12px}.photo-entry h3{font-size:12px;margin:0 0 10px}.photo-grid{display:flex;gap:18px}.photo-grid figure{width:45%;margin:0}.photo-grid img{max-height:220px;max-width:100%;object-fit:contain;border:1px solid #e5e9ee;border-radius:6px}.photo-grid figcaption{font-size:10px;color:#637186;margin-top:5px}@page{size:A4;margin:15mm}@media print{.toolbar{display:none}body{margin:0;max-width:unset;padding:0;font-size:9px}h2{break-after:avoid}thead{display:table-header-group}tr{break-inside:avoid}.photo-entry{break-inside:avoid}a{text-decoration:none}}
+    </style></head><body><div class="toolbar"><span>Diese Ansicht kannst du drucken oder über den iPhone-Druckdialog als PDF sichern.</span><button onclick="window.print()">Drucken / Als PDF sichern</button></div><div class="top"><div><h1>Hausratverzeichnis</h1><div class="muted">Private Bestandsaufnahme · Werte inkl. Mehrwertsteuer</div></div><div class="date">Stand: <strong>${readableDate(isoDate())}</strong><br>${state.items.length} Positionen · ${quantity(state.items)} Stück</div></div>
+    ${state.settings.name||state.settings.address?`<div class="info"><strong>${escapeHTML(state.settings.name)}</strong>${state.settings.name&&state.settings.address?'\n':''}${escapeHTML(state.settings.address)}</div>`:''}
+    <div class="total"><span class="label">SUMME ALLER ERFASSTEN BRUTTOPREISE</span><strong>${euros(totalValue(state.items))}</strong></div>
+    <h2>Einzelaufstellung</h2><table><thead><tr><th class="num">#</th><th>Gegenstand / Beschreibung</th><th>Raum</th><th>Kategorie</th><th class="num">Anzahl</th><th class="num">Brutto / St.</th><th class="num">Gesamt</th></tr></thead><tbody>${rows||'<tr><td colspan="7">Keine Gegenstände erfasst.</td></tr>'}</tbody><tfoot><tr><td colspan="6">Gesamtsumme brutto</td><td class="num">${euros(totalValue(state.items))}</td></tr></tfoot></table>
+    <h2>Zwischensummen nach Raum</h2><table><thead><tr><th>Raum</th><th class="num">Positionen</th><th class="num">Summe brutto</th></tr></thead><tbody>${breakdown||'<tr><td colspan="3">Noch keine Räume erfasst.</td></tr>'}</tbody></table>
+    ${appendix?`<h2>Fotodokumentation</h2>${appendix}`:''}<p class="foot">Dieses Verzeichnis dokumentiert selbst eingetragene Bruttopreise und ist keine Wertermittlung durch einen Versicherer. Eine etwaige Unterversicherung, Wiederbeschaffungswerte und besondere Entschädigungsgrenzen müssen separat geprüft werden.</p></body></html>`;
+  }
+  function openReport(){
+    const html=reportHTML();
+    const win=window.open('','_blank');
+    if(!win){fileDownload(new Blob([html],{type:'text/html;charset=utf-8'}),`Hausrat-Bericht-${isoDate()}.html`);notify('Popup blockiert – HTML-Bericht heruntergeladen.');return;}
+    win.document.open();win.document.write(html);win.document.close();
+  }
+  function normalizeImport(data){
+    if(!data||data.app!=='hausrat-offline'||data.version!==1||!Array.isArray(data.items))throw new Error('Diese Datei ist kein gültiges Hausrat-Backup (Version 1).');
+    if(data.items.length>10000)throw new Error('Das Backup enthält zu viele Einträge.');
+    const items=data.items.map(validateItem);
+    if(items.some(x=>!x))throw new Error('Das Backup enthält ungültige Preis- oder Stückzahlangaben.');
+    if(new Set(items.map(x=>x.id)).size!==items.length)throw new Error('Das Backup enthält doppelte Eintrags-IDs.');
+    return {items,settings:sanitizeSettings(data.settings)};
+  }
+  async function importFile(file){
+    if(!file)return;
+    if(file.size>100*1024*1024){notify('Die Backup-Datei ist zu groß (max. 100 MB).');return;}
+    try {
+      const content=JSON.parse(await file.text());state.pendingImport=normalizeImport(content);
+      $('#importDescription').textContent=`${state.pendingImport.items.length} Einträge gefunden. Du kannst die Daten zusammenführen oder den bisherigen Bestand vollständig ersetzen. Empfehlung: Sichere vorher deinen aktuellen Bestand als JSON.`;
+      $('#importDialog').showModal();
+    }catch(err){alert('Import nicht möglich: '+(err.message||'Ungültige Datei.'));}
+    finally{$('#importFile').value='';}
+  }
+  async function applyImport(mode){
+    if(!state.pendingImport)return;
+    const incoming=state.pendingImport;
+    if(mode==='replace' && !confirm('Alle bisherigen Einträge werden durch das Backup ersetzt. Hast du ein aktuelles Backup gespeichert?'))return;
+    const merged=mode==='replace'?incoming.items:Array.from(new Map([...state.items,...incoming.items].map(x=>[x.id,x])).values());
+    const settings=mode==='replace'?incoming.settings:state.settings;
+    try{await store.replace(merged,settings);state.items=merged;state.settings=settings;state.pendingImport=null;$('#importDialog').close();goTo('inventory');notify(`${incoming.items.length} Einträge importiert.`);}
+    catch(err){alert('Import fehlgeschlagen: Der Speicher ist möglicherweise voll. Die bisherigen Daten wurden nicht absichtlich gelöscht.');console.error(err);}
+  }
+  function wireStaticControls(){
+    $('#tabInventory').addEventListener('click',()=>goTo('inventory'));
+    $('#tabSummary').addEventListener('click',()=>goTo('summary'));
+    $('#tabAdd').addEventListener('click',()=>openSheet());
+    $('#itemForm').addEventListener('submit',e=>{e.preventDefault();saveItem(false);});
+    $('#saveAndNext').addEventListener('click',()=>saveItem(true));
+    $('#closeSheet').addEventListener('click',requestClose);
+    $('#itemOverlay').addEventListener('click',e=>{if(e.target===$('#itemOverlay'))requestClose();});
+    document.addEventListener('keydown',e=>{
+      if($('#itemOverlay').classList.contains('hidden'))return;
+      if(e.key==='Escape'){e.preventDefault();requestClose();return;}
+      if(e.key==='Tab'){
+        const eligible=Array.from($('#itemSheet').querySelectorAll('button:not([disabled]):not(.hidden),input:not([disabled]),select:not([disabled]),textarea:not([disabled]),summary')).filter(x=>x.getClientRects().length);
+        if(!eligible.length)return;
+        const first=eligible[0],last=eligible[eligible.length-1];
+        if(e.shiftKey && document.activeElement===first){e.preventDefault();last.focus();}
+        else if(!e.shiftKey && document.activeElement===last){e.preventDefault();first.focus();}
+      }
+    });
+    $('#qtyMinus').addEventListener('click',()=>setQty(Number($('#itemQty').value)-1));
+    $('#qtyPlus').addEventListener('click',()=>setQty(Number($('#itemQty').value)+1));
+    $('#itemPhoto').addEventListener('change',e=>attachFile(e.target,'photo'));
+    $('#itemReceipt').addEventListener('change',e=>attachFile(e.target,'receipt'));
+    $('#removePhoto').addEventListener('click',()=>{state.draft.photo=null;imagePreview('photo',null);$('#itemPhoto').value='';});
+    $('#removeReceipt').addEventListener('click',()=>{state.draft.receipt=null;imagePreview('receipt',null);$('#itemReceipt').value='';});
+    $('#deleteItem').addEventListener('click',deleteCurrentItem);
+    $('#toastUndo').addEventListener('click',async()=>{if(!undoItem)return;const x=undoItem;try{await store.putItem(x);state.items.push(x);undoItem=null;$('#toast').classList.add('hidden');render();notify('Löschen rückgängig gemacht.');}catch(err){notify('Wiederherstellen fehlgeschlagen.');}});
+    $('#importFile').addEventListener('change',e=>importFile(e.target.files?.[0]));
+    $('#importMerge').addEventListener('click',()=>applyImport('merge'));
+    $('#importReplace').addEventListener('click',()=>applyImport('replace'));
+    $('#importCancel').addEventListener('click',()=>{state.pendingImport=null;$('#importDialog').close();});
+    $('#importDialog').addEventListener('close',()=>{state.pendingImport=null;});
+  }
+  async function init(){
+    ROOMS.forEach(r=>{const o=new Option(r,r);$('#itemRoom').add(o);});
+    CATEGORIES.forEach(r=>{const o=new Option(r,r);$('#itemCategory').add(o);});
+    store=createStorage();await store.init();state.canPersist=store.backend!=='memory';
+    try{const data=await store.read();state.items=(Array.isArray(data.items)?data.items:[]).map(validateItem).filter(Boolean);state.settings=sanitizeSettings(data.settings);}
+    catch(err){console.error(err);state.canPersist=false;}
+    wireStaticControls();render();
+    if('serviceWorker' in navigator && /^https?:$/.test(location.protocol))navigator.serviceWorker.register('./service-worker.js').catch(err=>console.warn('Offline-Cache nicht aktiv:',err));
+  }
+  init().catch(err=>{console.error(err);$('#content').innerHTML='<div class="empty"><h3>Start nicht möglich</h3><p>Bitte lade die Seite neu oder öffne sie in Safari.</p></div>';});
+})();
+</script>
+</body>
+</html>
